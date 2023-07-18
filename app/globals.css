@@ -105,3 +105,24 @@ a {
     color-scheme: dark;
   }
 }
+
+
+.data-table{
+  margin: 50px ;
+  border: 1px solid grey;
+}
+
+.pagination-footer{
+  margin: 20px 50px;
+}
+
+.table-heading{
+  font-size: x-large;
+  font-weight: 900;
+  text-align: center;
+  margin: 20px;
+}
+
+.pagination-btns{
+  margin: 0 5px;
+}
