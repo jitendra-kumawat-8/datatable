@@ -12,6 +12,7 @@ import {
   Input,
   Select,
   Badge,
+  Checkbox,
 } from "@chakra-ui/react";
 import {
   ArrowRightIcon,
@@ -19,7 +20,7 @@ import {
   ChevronRightIcon,
   ChevronLeftIcon,
 } from "@chakra-ui/icons";
-import { useState } from "react";
+import React, { useState } from "react";
 import "../app/globals.css";
 import { DataContext, useDataContext } from "@/app/page";
 
@@ -50,7 +51,44 @@ const DataTable: React.FC<DataTableProps> = ({
     rowsPerPage,
     setRowsPerPage,
     totalPages,
+    setSearchValue,
   } = dataContext;
+
+  const rowsPerPageOptions = [10, 20, 30, 50];
+  const [inputValue, setInputValue] = useState<number>(pageNumber + 1);
+  const [selectedRows, setSelectedRows] = useState<number[]>([]);
+  const [searchInput, setSearchInput] = useState<string>("");
+
+  const handleSelectRowChange = (
+    selected: string = "single",
+    e: React.ChangeEvent<HTMLInputElement>,
+    rowIndex: number
+  ) => {
+    const checked = e.target.checked;
+    if (selected == "single") {
+      setSelectedRows((prevRows) => {
+        if (checked) {
+          return [...prevRows, rowIndex];
+        } else {
+          return prevRows.filter((row) => row !== rowIndex);
+        }
+      });
+    } else if (selected == "all") {
+      setSelectedRows((prevRows) => {
+        if (checked) {
+          return page.map((_, index) => index);
+        } else {
+          return [];
+        }
+      });
+    }
+  };
+
+  const handleRowsPerPageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = parseInt(e.target.value);
+    setRowsPerPage(value);
+    setPageNumber(0);
+  };
 
   const handleHeaderClick = (column: string) => {
     if (sortable) {
@@ -63,9 +101,14 @@ const DataTable: React.FC<DataTableProps> = ({
     }
   };
 
+  const handleSearchInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchInput(value);
+    setSearchValue(value);
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value);
-
     setInputValue(value);
   };
 
@@ -95,8 +138,6 @@ const DataTable: React.FC<DataTableProps> = ({
     setPageNumber(totalPages - 1);
   };
 
-  const [inputValue, setInputValue] = useState<number>(pageNumber + 1);
-
   return (
     <Box
       className="data-table"
@@ -104,10 +145,29 @@ const DataTable: React.FC<DataTableProps> = ({
       display="flex"
       flexDirection="column"
     >
-      <Text className="table-heading">DataTable</Text>
+      <Box
+        display="flex"
+        flexDirection="row"
+        alignItems="center"
+        justifyContent={"space-between"}
+      >
+        <Text className="table-heading">DataTable</Text>
+        <Input
+          width={400}
+          placeholder="search..."
+          onChange={handleSearchInput}
+        />
+      </Box>
+
       <Table className="table" variant="striped">
         <Thead>
           <Tr>
+            <Th>
+              <Checkbox
+                isChecked={selectedRows.length === page.length}
+                onChange={(e) => handleSelectRowChange("all", e, 0)}
+              />
+            </Th>
             {headers.map((header, index) => (
               <Th
                 key={index}
@@ -120,8 +180,14 @@ const DataTable: React.FC<DataTableProps> = ({
           </Tr>
         </Thead>
         <Tbody>
-          {page.map((row, index) => (
-            <Tr key={index}>
+          {page.map((row, rowIndex) => (
+            <Tr key={rowIndex}>
+              <Td>
+                <Checkbox
+                  isChecked={selectedRows.includes(rowIndex)}
+                  onChange={(e) => handleSelectRowChange("single", e, rowIndex)}
+                />
+              </Td>
               {Object.values(row).map((cell, cellIndex) => (
                 <Td key={cellIndex}>{cell}</Td>
               ))}
@@ -171,7 +237,13 @@ const DataTable: React.FC<DataTableProps> = ({
               <Text mx={2} whiteSpace="nowrap">
                 Rows per Page :{" "}
               </Text>
-              <Select />
+              <Select value={rowsPerPage} onChange={handleRowsPerPageChange}>
+                {rowsPerPageOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </Select>
             </Flex>
           </Flex>
           <Flex className="pagination-btn-group">

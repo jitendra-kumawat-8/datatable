@@ -10,6 +10,7 @@ const Home: React.FC = () => {
   const [rowsPerPage, setRowsPerPage] = useState<number>(10);
   const [data, setData] = useState<any>([]);
   const [page, setPage] = useState<any>([]);
+  const [searchValue, setSearchValue] = useState<string>("");
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [pageNumber, setPageNumber] = useState<number>(0);
@@ -23,7 +24,6 @@ const Home: React.FC = () => {
         );
         const tempData: any[] = await response.json();
         setData(tempData);
-        setTotalPages(Math.ceil(tempData.length / rowsPerPage));
       } catch (err) {
         console.log(err);
       }
@@ -34,9 +34,7 @@ const Home: React.FC = () => {
 
   useEffect(() => {
     if (sortColumn) {
-      console.log(sortColumn);
-
-      const sortedData = data.sort((a: any, b: any) => {
+      data.sort((a: any, b: any) => {
         if (sortColumn === "timestamp") {
           const aArray = a[sortColumn].split(" ");
           const bArray = b[sortColumn].split(" ");
@@ -58,14 +56,21 @@ const Home: React.FC = () => {
             : b[sortColumn].localeCompare(a[sortColumn]);
         }
       });
-      setData(sortedData);
     }
-    const currentPage = data.slice(
+
+    const filteredData = data.filter((row: any) => {
+      return Object.values(row).some((value: any) =>
+        value.toString().toLowerCase().includes(searchValue.toLowerCase())
+      );
+    });
+
+    setTotalPages(Math.ceil(filteredData.length / rowsPerPage));
+    const currentPage = filteredData.slice(
       pageNumber * rowsPerPage,
       pageNumber * rowsPerPage + rowsPerPage
     );
     setPage(currentPage);
-  }, [data, sortColumn, sortDirection, pageNumber, rowsPerPage]);
+  }, [data, searchValue, sortColumn, sortDirection, pageNumber, rowsPerPage]);
 
   return (
     <DataContext.Provider
@@ -79,6 +84,7 @@ const Home: React.FC = () => {
         pageNumber,
         setPageNumber,
         totalPages,
+        setSearchValue,
       }}
     >
       <ChakraProvider>
